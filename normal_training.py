@@ -12,11 +12,9 @@ def main():
     origin_space, target_space = generate_data(sample_size=25000, plot=True)
     data = np.hstack((origin_space, target_space))
     data_tensor = torch.from_numpy(data).float()
-    # data_tensor = data_tensor.cuda()
 
     # create neural net, define optimizer and loss criterion
     net = MappingNet()
-    # net = net.cuda()
     optimizer = torch.optim.Adam(params=net.parameters())
     criterion = torch.nn.MSELoss()
 
