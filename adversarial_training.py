@@ -21,7 +21,10 @@ def main():
     # create toy data as a tensor
     origin_space, target_space = generate_data(plot=True)
     data = np.hstack((origin_space, target_space))
-    data_tensor = torch.from_numpy(data).float().to(device)
+    data_tensor = torch.tensor(data=data,
+                               dtype=torch.float,
+                               device=device,
+                               requires_grad=False)
 
     # create neural net, define optimizer and loss criterion
     map_net = MappingNet().to(device)
@@ -38,44 +41,56 @@ def main():
     iteration = 0
     loss_curve = []
     t0 = time.time()
-    for i in data_tensor:
+    d_running_loss = 0
+    m_running_loss = 0
+    for row in data_tensor:
         iteration += 1
 
         # get input and target
-        origin = i[:2]
-        target = i[2:]
-
-        # zero the parameter gradients
-        map_optimizer.zero_grad()
+        origin = row[:2].view(1, 2)
+        target = row[2:].view(1, 2)
 
         # forward pass
-        outputs = map_net(origin)
+        mapped_outputs = map_net(origin)
 
         # adversarial
-        discrim_data_tensor = torch.cat((target.view(1, 2),
-                                         outputs.view(1, 2)), dim=0) \
+        discrim_data_tensor = torch.cat([target.view(1, 2),
+                                         mapped_outputs.view(1, 2)], dim=0) \
                                    .to(device)
         discrim_output = discrim_net(discrim_data_tensor).to(device)
-        classes = torch.Tensor(data=[[1, 0], [0, 1]]).to(device)
-        disc = torch.cat(tensors=(discrim_output, classes), dim=1).to(device)
+        classes = torch.tensor(data=[[1., 0.], [0., 1.]],
+                               requires_grad=True).to(device)
 
         # calculate loss by trying to predict if an input came from original
         # space after transformation or from the target space
-        for j in disc:
-            discrim_optimizer.zero_grad()
-            loss = criterion(j[:2], j[2:].detach())
-            loss.backward(retain_graph=True)
-            discrim_optimizer.step()
+        # for i in range(discrim_output.shape[0]):
+        # zero the parameter gradients
+        discrim_optimizer.zero_grad()
+        map_optimizer.zero_grad()
 
-        # optimize
+        # calculate loss
+        d_loss = criterion(discrim_output, classes.detach())
+        m_loss = criterion(discrim_output, 1 - classes.detach())
+
+        # backward propagate
+        d_loss.backward(retain_graph=True)
+        m_loss.backward(retain_graph=True)
+
+        # optimizer step
+        discrim_optimizer.step()
         map_optimizer.step()
 
         # print loss every 1000 samples
+        d_running_loss += d_loss.data.item()
+        m_running_loss += m_loss.data.item()
         if iteration % 1000 == 0:
-            print(f'Loss: {loss:.10f} after {iteration} samples')
+            print(f'[iter {iteration}] d_loss: {d_running_loss / 1000}')
+            print(f'[iter {iteration}] m_loss: {m_running_loss / 1000}')
+            d_running_loss = 0
+            m_running_loss = 0
 
         # add loss to a list to be plotted
-        loss_curve.append(loss.data.item())
+        loss_curve.append(d_loss.data.item())
 
     t1 = time.time()
     print(f'Time taken to finish: {t1 - t0}')

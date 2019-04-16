@@ -21,13 +21,14 @@ def main():
     # begin training loops
     iteration = 0
     loss_curve = []
+    running_loss = 0
     t0 = time.time()
-    for i in data_tensor:
+    for row in data_tensor:
         iteration += 1
 
         # get input and target
-        origin = i[:2]
-        target = i[2:]
+        origin = row[:2]
+        target = row[2:]
 
         # zero the parameter gradients
         optimizer.zero_grad()
@@ -43,8 +44,10 @@ def main():
         optimizer.step()
 
         # print loss every 1000 samples
+        running_loss += loss.data.item()
         if iteration % 1000 == 0:
-            print(f'Loss: {loss:.10f} after {iteration} samples')
+            print(f'[iter {iteration}] loss: {running_loss / 1000}')
+            running_loss = 0
 
         # add loss to a list to be plotted
         loss_curve.append(loss.data.item())
