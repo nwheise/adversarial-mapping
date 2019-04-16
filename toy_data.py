@@ -8,7 +8,7 @@ def points_on_triangle(vertices: np.ndarray, n: int) -> np.ndarray:
     Give n random points uniformly on a triangle.
 
     Parameters:
-        vertices: numpy array of shape (2, 3), giving triangle vertices as one
+        vertices: numpy array of shape (3, 2), giving triangle vertices as one
                   vertex per row
         n: number of points to generate
     '''
