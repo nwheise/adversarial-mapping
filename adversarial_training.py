@@ -57,7 +57,7 @@ def main():
         device = torch.device('cpu')
 
     # create toy data as a tensor
-    origin_space, target_space = generate_data(sample_size=25000, plot=True)
+    origin_space, target_space = generate_data(sample_size=10000, plot=True)
     data = np.hstack((origin_space, target_space))
     data_tensor = torch.tensor(data=data,
                                dtype=torch.float,
@@ -74,16 +74,9 @@ def main():
                                         momentum=0.5)
     criterion = torch.nn.BCELoss()
 
-    # Manually create the rotation matrix used, for supervised validation
-    # TODO !! do validation in an unsupervised way
-    theta = np.pi / 2
-    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)], 
-                           [np.sin(theta), np.cos(theta)]])
-
     # begin training loops
-    epochs = 5
     t0 = time.time()
-    for i in range(epochs):
+    for epoch in range(5):
 
         iteration = 0
         running_error = 0
@@ -127,16 +120,17 @@ def main():
                           point=mapped_point,
                           source=origin_source)
 
-            # get a supervised error measure
-            B = map_net.fc1.weight.detach().numpy()
-            mse = (np.square(rot_matrix - B)).mean(axis=None)
-            running_error += mse
-
             x = 1000
             if iteration % x == 0: 
-                print(f'[{i} {iteration}] Avg MSE of last {x} iterations: {running_error / x}')
+                print(f'[{epoch} {iteration}] done')
                 running_error = 0
 
+
+    # Manually create the rotation matrix used, as a check
+    # TODO !! do validation in an unsupervised way
+    theta = np.pi / 2
+    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)], 
+                           [np.sin(theta), np.cos(theta)]])
 
     # Print information from the training
     t1 = time.time()
@@ -146,14 +140,17 @@ def main():
     print(f'Learned Rotation:\n{map_net.fc1.weight.detach().numpy()}')
 
     # generate test data and make predictions
-    test_origin, test_target = generate_data(sample_size=10000, plot=False)
+    test_origin, test_target = generate_data(sample_size=1000, plot=False)
+    rotated_origin = test_origin @ rot_matrix
     test_tensor = torch.from_numpy(test_origin).float().to(device)
     test_prediction = map_net(test_tensor).cpu().detach().numpy()
 
-    # plot test data and its transformation
+    # plot test data, its transformation, and the true target space
     plt.clf()
     plt.scatter(x=test_origin[:, 0], y=test_origin[:, 1], c='red')
-    plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1], c='blue')
+    plt.scatter(x=rotated_origin[:, 0], y=rotated_origin[:, 1], c='blue')
+    plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1], c='yellow')
+    plt.axis([-5, 5, -5, 5])
     plt.show()
 
 

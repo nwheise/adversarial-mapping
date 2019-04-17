@@ -69,6 +69,7 @@ def main():
     plt.clf()
     plt.scatter(x=test_origin[:, 0], y=test_origin[:, 1], c='red')
     plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1], c='blue')
+    plt.axis([-5, 5, -5, 5])
     plt.show()
 
 
