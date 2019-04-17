@@ -17,8 +17,8 @@ class DiscriminatorNet(nn.Module):
 
     def __init__(self):
         super(DiscriminatorNet, self).__init__()
-        self.fc1 = nn.Linear(in_features=2, out_features=32)
-        self.fc2 = nn.Linear(in_features=32, out_features=2)
+        self.fc1 = nn.Linear(in_features=2, out_features=8)
+        self.fc2 = nn.Linear(in_features=8, out_features=2)
 
 
     def forward(self, x):
