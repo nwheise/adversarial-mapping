@@ -120,8 +120,7 @@ def main():
                           point=mapped_point,
                           source=origin_source)
 
-            x = 1000
-            if iteration % x == 0: 
+            if iteration % 1000 == 0: 
                 print(f'[{epoch} {iteration}] done')
                 running_error = 0
 
@@ -147,10 +146,14 @@ def main():
 
     # plot test data, its transformation, and the true target space
     plt.clf()
-    plt.scatter(x=test_origin[:, 0], y=test_origin[:, 1], c='red')
-    plt.scatter(x=rotated_origin[:, 0], y=rotated_origin[:, 1], c='blue')
-    plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1], c='yellow')
+    plt.scatter(x=test_origin[:, 0], y=test_origin[:, 1],
+                c='red', label='origin space')
+    plt.scatter(x=rotated_origin[:, 0], y=rotated_origin[:, 1],
+                c='blue', label='target space')
+    plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1],
+                c='yellow', label='transformed data')
     plt.axis([-5, 5, -5, 5])
+    plt.legend(loc='upper left')
     plt.show()
 
 

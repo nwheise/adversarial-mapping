@@ -41,9 +41,12 @@ def generate_data(sample_size=25000, plot=False):
 
     # Optionally display the plot
     if plot:
-        plt.scatter(x=points[:, 0], y=points[:, 1], c='red')
-        plt.scatter(x=points_rotated[:, 0], y=points_rotated[:, 1], c='blue')
+        plt.scatter(x=points[:, 0], y=points[:, 1],
+                    c='red', label='origin space')
+        plt.scatter(x=points_rotated[:, 0], y=points_rotated[:, 1],
+                    c='blue', label='target space')
         plt.axis([-5, 5, -5, 5])
+        plt.legend(loc='upper left')
         plt.show()
 
     return points, points_rotated
