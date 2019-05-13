@@ -1,7 +1,6 @@
+#!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
-from nets import MappingNet
-
 
 def points_on_triangle(vertices: np.ndarray, n: int) -> np.ndarray:
     '''
@@ -14,12 +13,11 @@ def points_on_triangle(vertices: np.ndarray, n: int) -> np.ndarray:
     '''
     x = np.sort(np.random.rand(2, n), axis=0)
     x = np.column_stack([x[0], x[1] - x[0], 1 - x[1]]) @ vertices
-    np.random.shuffle(x)
 
     return x
 
 
-def generate_data(sample_size=25000, plot=False):
+def generate_data(rot_matrix, sample_size=25000, plot=False, shuffle=True):
     '''
     Generate some toy data. The origin space lies in a triangle, and the
     target space lies in a triangle produced by rotating the first by an angle.
@@ -32,12 +30,9 @@ def generate_data(sample_size=25000, plot=False):
     # Generate data in a triangle
     triangle_vertices = np.array([(1, 1), (3, 4), (1, 3)])
     points = points_on_triangle(triangle_vertices, sample_size)
-
-    # Rotation by theta
-    theta = np.pi / 2
-    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)], 
-                           [np.sin(theta), np.cos(theta)]])
     points_rotated = points @ rot_matrix
+    if shuffle:
+        np.random.shuffle(points_rotated)
 
     # Optionally display the plot
     if plot:
@@ -50,3 +45,11 @@ def generate_data(sample_size=25000, plot=False):
         plt.show()
 
     return points, points_rotated
+
+if __name__ == "__main__":
+    # Rotation by theta
+    theta = np.pi / 2
+    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
+                           [np.sin(theta), np.cos(theta)]])
+
+    generate_data(rot_matrix, plot=True)

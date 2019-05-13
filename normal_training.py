@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
@@ -8,8 +9,13 @@ from toy_data import generate_data
 
 
 def main():
+    shuffle=False
+    theta = np.pi / 2
+    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
+                           [np.sin(theta), np.cos(theta)]])
+
     # create toy data as a tensor
-    origin_space, target_space = generate_data(sample_size=25000, plot=True)
+    origin_space, target_space = generate_data(rot_matrix, sample_size=25000, plot=True, shuffle=shuffle)
     data = np.hstack((origin_space, target_space))
     data_tensor = torch.from_numpy(data).float()
 
@@ -21,7 +27,6 @@ def main():
     # begin training loops
     iteration = 0
     loss_curve = []
-    running_loss = 0
     t0 = time.time()
     for row in data_tensor:
         iteration += 1
@@ -44,10 +49,8 @@ def main():
         optimizer.step()
 
         # print loss every 1000 samples
-        running_loss += loss.data.item()
         if iteration % 1000 == 0:
-            print(f'[iter {iteration}] loss: {running_loss / 1000}')
-            running_loss = 0
+            print(f'[iter {iteration}] loss: {loss.data.item()}')
 
         # add loss to a list to be plotted
         loss_curve.append(loss.data.item())
@@ -61,7 +64,7 @@ def main():
     plt.show()
 
     # generate test data and make predictions
-    test_origin, test_target = generate_data(sample_size=10000, plot=False)
+    test_origin, test_target = generate_data(rot_matrix, sample_size=10000, plot=False)
     test_tensor = torch.from_numpy(test_origin).float()
     test_prediction = net(test_tensor).detach().numpy()
 
