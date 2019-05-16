@@ -48,19 +48,31 @@ def training_step(net, discriminator, optimizer, loss_criterion, point, source):
     return loss.data.item()
 
 
+def weights_init_uniform(m):
+    '''
+    Initialization function to be applied to a neural net. Initializes
+    weights to a sample from a unifrom distribution from
+    [- 1 / sqrt(n), 1 / sqrt(n)] where n is the number of input features.
+    '''
+
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        bound = 1 / np.sqrt(m.in_features)
+        m.weight.data.uniform_(-bound, bound)
+        m.bias.data.fill_(0)
+
+
 def main():
     theta = np.pi / 2
     rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
                            [np.sin(theta), np.cos(theta)]])
 
     # use gpu if cuda is available
-    # note: cpu actually runs faster for simple architectures so we always
-    # use cpu for now
     if torch.cuda.is_available():
-        # device = torch.device('cuda')
-        device = torch.device('cpu')
+        device = torch.device('cuda')
     else:
         device = torch.device('cpu')
+    print(f'Device used: {device}')
 
     # create toy data as a tensor
     origin_space, target_space = generate_data(rot_matrix, sample_size=10000, plot=False, shuffle=True)
@@ -80,7 +92,13 @@ def main():
                                         momentum=0.5)
     criterion = torch.nn.BCELoss()
 
+    # Initialize weights to (attempt to) improve stability
+    map_net.apply(weights_init_uniform)
+    discrim_net.apply(weights_init_uniform)
+
     # begin training loops
+    print('Epoch | Iteration | Discrim Loss / 2 | Map Loss')
+
     t0 = time.time()
     for epoch in range(1):
 
@@ -96,7 +114,7 @@ def main():
             origin_source = torch.tensor(data=[[1.]]).to(device)
             target_source = torch.tensor(data=[[0.]]).to(device)
 
-            # train each net on the true target point
+            # train discriminator on the true target point
             discrim_loss = training_step(net='discriminator',
                           discriminator=discrim_net,
                           optimizer=discrim_optimizer,
