@@ -69,13 +69,17 @@ def main():
 
     # use gpu if cuda is available
     if torch.cuda.is_available():
-        device = torch.device('cuda')
+        # device = torch.device('cuda')
+        device = torch.device('cpu') # always use cpu because it's faster in this case
     else:
         device = torch.device('cpu')
     print(f'Device used: {device}')
 
     # create toy data as a tensor
-    origin_space, target_space = generate_data(rot_matrix, sample_size=10000, plot=False, shuffle=True)
+    origin_space, target_space = generate_data(rot_matrix=rot_matrix,
+                                               sample_size=10000,
+                                               plot=False,
+                                               shuffle=True)
     data = np.hstack((origin_space, target_space))
     data_tensor = torch.tensor(data=data,
                                dtype=torch.float,
@@ -86,10 +90,10 @@ def main():
     discrim_net = DiscriminatorNet().to(device)
     map_optimizer = torch.optim.Adam(params=map_net.parameters(),
                                      lr=1e-3,
-                                     weight_decay=1e-5)
+                                     weight_decay=0)
     discrim_optimizer = torch.optim.Adam(params=discrim_net.parameters(),
                                          lr=1e-3,
-                                         weight_decay=1e-5)
+                                         weight_decay=0)
     criterion = torch.nn.BCELoss()
 
     # Initialize weights to (attempt to) improve stability
@@ -116,26 +120,26 @@ def main():
 
             # train discriminator on the true target point
             discrim_loss = training_step(net='discriminator',
-                          discriminator=discrim_net,
-                          optimizer=discrim_optimizer,
-                          loss_criterion=criterion,
-                          point=target,
-                          source=target_source)
+                                         discriminator=discrim_net,
+                                         optimizer=discrim_optimizer,
+                                         loss_criterion=criterion,
+                                         point=target,
+                                         source=target_source)
 
             # train each net on a point mapped from the origin space to the target
             mapped_point = map_net(origin)
             map_loss = training_step(net='mapper',
-                          discriminator=discrim_net,
-                          optimizer=map_optimizer,
-                          loss_criterion=criterion,
-                          point=mapped_point,
-                          source=origin_source)
+                                     discriminator=discrim_net,
+                                     optimizer=map_optimizer,
+                                     loss_criterion=criterion,
+                                     point=mapped_point,
+                                     source=origin_source)
             discrim_loss += training_step(net='discriminator',
-                          discriminator=discrim_net,
-                          optimizer=discrim_optimizer,
-                          loss_criterion=criterion,
-                          point=mapped_point,
-                          source=origin_source)
+                                          discriminator=discrim_net,
+                                          optimizer=discrim_optimizer,
+                                          loss_criterion=criterion,
+                                          point=mapped_point,
+                                          source=origin_source)
 
             if iteration % 1000 == 0:
                 print(f'{epoch} {iteration} {discrim_loss/2} {map_loss}')
@@ -146,10 +150,12 @@ def main():
     print(f'Time taken to finish: {t1 - t0}')
 
     print(f'True Rotation:\n{rot_matrix}')
-    print(f'Learned Rotation:\n{map_net.fc1.weight.detach().numpy()}')
+    print(f'Learned Rotation:\n{map_net.fc1.weight.cpu().detach().numpy()}')
 
     # generate test data and make predictions
-    test_origin, test_target = generate_data(rot_matrix, sample_size=1000, plot=False)
+    test_origin, test_target = generate_data(rot_matrix=rot_matrix,
+                                             sample_size=1000,
+                                             plot=False)
     test_tensor = torch.from_numpy(test_origin).float().to(device)
     test_prediction = map_net(test_tensor).cpu().detach().numpy()
 
