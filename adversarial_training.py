@@ -84,12 +84,12 @@ def main():
     # create neural nets, define optimizers and loss criterion
     map_net = MappingNet().to(device)
     discrim_net = DiscriminatorNet().to(device)
-    map_optimizer = torch.optim.SGD(params=map_net.parameters(),
-                                    lr=0.001,
-                                    momentum=0.5)
-    discrim_optimizer = torch.optim.SGD(params=discrim_net.parameters(),
-                                        lr=0.01,
-                                        momentum=0.5)
+    map_optimizer = torch.optim.Adam(params=map_net.parameters(),
+                                     lr=1e-3,
+                                     weight_decay=1e-5)
+    discrim_optimizer = torch.optim.Adam(params=discrim_net.parameters(),
+                                         lr=1e-3,
+                                         weight_decay=1e-5)
     criterion = torch.nn.BCELoss()
 
     # Initialize weights to (attempt to) improve stability
