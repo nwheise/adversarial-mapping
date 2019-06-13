@@ -62,6 +62,32 @@ def weights_init_uniform(m):
         m.bias.data.fill_(0)
 
 
+def weights_init_identity(m):
+    '''
+    Initialization function for linear layers, setting weights to the identity
+    matrix and bias to zero.
+    '''
+
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        torch.nn.init.eye_(tensor=m.weight)
+        m.bias.data.fill_(0)
+
+
+def weights_init_rot(m):
+    '''
+    Initialization function for linear layers, setting weights to a small
+    rotation and bias to zero.
+    '''
+
+    theta = np.pi / 4
+    classname = m.__class__.__name__
+    if classname.find('Linear') != -1:
+        m.weight.data = torch.Tensor([[np.cos(theta), -np.sin(theta)],
+                                      [np.sin(theta), np.cos(theta)]])
+        m.bias.data.fill_(0)
+
+
 def main():
     theta = np.pi / 2
     rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
@@ -89,22 +115,23 @@ def main():
     map_net = MappingNet().to(device)
     discrim_net = DiscriminatorNet().to(device)
     map_optimizer = torch.optim.Adam(params=map_net.parameters(),
-                                     lr=1e-3,
-                                     weight_decay=0)
+                                     lr=1e-4,
+                                     weight_decay=1e-4)
     discrim_optimizer = torch.optim.Adam(params=discrim_net.parameters(),
-                                         lr=1e-3,
-                                         weight_decay=0)
+                                         lr=1e-4,
+                                         weight_decay=1e-4)
     criterion = torch.nn.BCELoss()
 
     # Initialize weights to (attempt to) improve stability
-    map_net.apply(weights_init_uniform)
+    map_net.apply(weights_init_rot)
     discrim_net.apply(weights_init_uniform)
 
     # begin training loops
     print('Epoch | Iteration | Discrim Loss / 2 | Map Loss')
+    print('-----------------------------------------------')
 
     t0 = time.time()
-    for epoch in range(1):
+    for epoch in range(2):
 
         iteration = 0
         for row in data_tensor:
@@ -141,9 +168,11 @@ def main():
                                           point=mapped_point,
                                           source=origin_source)
 
-            if iteration % 1000 == 0:
-                print(f'{epoch} {iteration} {discrim_loss/2} {map_loss}')
-
+            if iteration % 500 == 0:
+                print(f'{epoch}'.center(6) + '|' +
+                      f'{iteration}'.center(11) + '|' +
+                      f'{round(discrim_loss/2, 5)}'.center(18) + '|' +
+                      f'{round(map_loss, 5)}'.center(9))
 
     # Print information from the training
     t1 = time.time()
@@ -151,6 +180,8 @@ def main():
 
     print(f'True Rotation:\n{rot_matrix}')
     print(f'Learned Rotation:\n{map_net.fc1.weight.cpu().detach().numpy()}')
+    print(f'Learned Rotation Bias:\n{map_net.fc1.bias.cpu().detach().numpy()}')
+
 
     # generate test data and make predictions
     test_origin, test_target = generate_data(rot_matrix=rot_matrix,
@@ -158,6 +189,8 @@ def main():
                                              plot=False)
     test_tensor = torch.from_numpy(test_origin).float().to(device)
     test_prediction = map_net(test_tensor).cpu().detach().numpy()
+
+    check_pred = test_origin @ map_net.fc1.weight.cpu().detach().numpy() + map_net.fc1.bias.cpu().detach().numpy()
 
     # plot test data, its transformation, and the true target space
     plt.clf()
@@ -167,6 +200,8 @@ def main():
                 c='blue', label='target space')
     plt.scatter(x=test_prediction[:, 0], y=test_prediction[:, 1],
                 c='yellow', label='transformed data')
+    plt.scatter(x=check_pred[:, 0], y=check_pred[:, 1],
+                c='green', label='check')
     plt.axis([-5, 5, -5, 5])
     plt.legend(loc='upper left')
     plt.show()

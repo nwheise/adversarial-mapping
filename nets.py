@@ -21,6 +21,7 @@ class DiscriminatorNet(nn.Module):
         self.fc1 = nn.Linear(in_features=2, out_features=8)
         self.fc2 = nn.Linear(in_features=8, out_features=1)
 
+
     def forward(self, x):
         x = self.fc1(x)
         x = F.relu(x)
