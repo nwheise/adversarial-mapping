@@ -88,12 +88,12 @@ def main():
     criterion = torch.nn.BCELoss()
 
     # begin training loops
-    logger.info("Begin Training !")
-    logger.info("Tensorboard logging at localhost:6006")
+    logger.info("Training has begun!")
+    logger.info("Access TensorBoard to view results.")
 
     t0 = time.time()
     global_step = 0
-    for epoch in range(10):
+    for epoch in range(25):
 
         for data_pair in data_tensor:
             global_step += 1
@@ -183,10 +183,6 @@ def main():
     # Print information from the training
     t1 = time.time()
     logger.info(f"Time taken to finish: {t1 - t0}")
-
-    # export scalar data to JSON for external processing
-    writer.export_scalars_to_json("./all_scalars.json")
-    writer.close()
 
 
 if __name__ == "__main__":
