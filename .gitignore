@@ -1,3 +1,5 @@
+all_scalars.json
+env/
 .git
 __pycache__
-env/
+runs/

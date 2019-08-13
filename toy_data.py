@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 def points_on_triangle(vertices: np.ndarray, n: int) -> np.ndarray:
     '''
@@ -17,7 +18,7 @@ def points_on_triangle(vertices: np.ndarray, n: int) -> np.ndarray:
     return x
 
 
-def generate_data(rot_matrix, sample_size=25000, plot=False, shuffle=True):
+def generate_data(sample_size: int = 25000, shuffle: bool = True):
     '''
     Generate some toy data. The origin space lies in a triangle, and the
     target space lies in a triangle produced by rotating the first by an angle.
@@ -30,26 +31,13 @@ def generate_data(rot_matrix, sample_size=25000, plot=False, shuffle=True):
     # Generate data in a triangle
     triangle_vertices = np.array([(1, 1), (3, 4), (1, 3)])
     points = points_on_triangle(triangle_vertices, sample_size)
+
+    # Generate target points by rotating
+    theta = np.pi / 2
+    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
+                           [np.sin(theta), np.cos(theta)]])
     points_rotated = points @ rot_matrix
     if shuffle:
         np.random.shuffle(points_rotated)
 
-    # Optionally display the plot
-    if plot:
-        plt.scatter(x=points[:, 0], y=points[:, 1],
-                    c='red', label='origin space')
-        plt.scatter(x=points_rotated[:, 0], y=points_rotated[:, 1],
-                    c='blue', label='target space')
-        plt.axis([-5, 5, -5, 5])
-        plt.legend(loc='upper left')
-        plt.show()
-
     return points, points_rotated
-
-if __name__ == "__main__":
-    # Rotation by theta
-    theta = np.pi / 2
-    rot_matrix = np.array([[np.cos(theta), -np.sin(theta)],
-                           [np.sin(theta), np.cos(theta)]])
-
-    generate_data(rot_matrix, plot=True)
