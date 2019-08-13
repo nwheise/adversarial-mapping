@@ -4,7 +4,6 @@ import torch.nn.functional as F
 
 
 class MappingNet(nn.Module):
-
     def __init__(self):
         super(MappingNet, self).__init__()
         self.fc1 = nn.Linear(in_features=2, out_features=2, bias=False)
@@ -16,7 +15,6 @@ class MappingNet(nn.Module):
 
 
 class DiscriminatorNet(nn.Module):
-
     def __init__(self):
         super(DiscriminatorNet, self).__init__()
         self.fc1 = nn.Linear(in_features=2, out_features=16)
