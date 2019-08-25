@@ -36,7 +36,6 @@ def training_step(
     :param point: data vector of shape (1, 2)
     :param source: vector of shape (1, 2) describing the source of
         the point, either a mapped point or a true target point
-    :param map_weight: weights for mapper regularization
     """
 
     # zero grad the optimizer
